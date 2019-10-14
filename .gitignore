@@ -1,0 +1,9 @@
+*.sdf
+*.opensdf
+*.psess
+*.vsp
+ipch/
+Release/
+Debug/
+Mandelbrot/Release
+Mandelbrot/Debug
