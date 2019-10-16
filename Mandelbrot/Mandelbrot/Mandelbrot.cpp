@@ -43,6 +43,8 @@ int main()
 	sf::Vector2i mousePos(0, 0);
 
 	bool locked = false;
+	bool drag = false;
+	sf::Vector2i dragOffset(0, 0);
 	
 	texture.update(image);
 
@@ -112,17 +114,53 @@ int main()
 				relativeMinY = middleY - diffY / 2;
 			}
 
-			if (event.type == sf::Event::MouseButtonPressed) 
+			if (event.type == sf::Event::MouseButtonReleased) 
+			{
+				drag = false;
+			}
+
+			if (event.type == sf::Event::MouseButtonPressed)
+			{
+				if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+				{
+					drag = true;
+				}
+			}
+
+			
+
+			if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
 			{
 				locked = !locked;
 			}
 
 			if (event.type == sf::Event::MouseMoved) 
 			{
+				sf::Vector2i newMousePos = sf::Mouse::getPosition(window);
 				if (!locked)
 				{
-					mousePos = sf::Mouse::getPosition(window);
-				}				
+					dragOffset = mousePos - newMousePos;
+
+					mousePos = newMousePos;
+				}	
+
+				if (drag)
+				{
+					double percentage_x = dragOffset.x / (double)screenWidth;
+					double percentage_y = dragOffset.y / (double)screenHeight;
+					double diffX = (relativeMaxX - relativeMinX) * percentage_x;
+					double diffY = (relativeMinY - relativeMaxY) * percentage_y;
+
+					std::cout << diffX << std::endl;
+
+					relativeMinX += diffX;
+					relativeMaxX += diffX;
+					
+					relativeMinY += diffY;
+					relativeMaxY += diffY;
+
+					dragOffset = sf::Vector2i(0, 0);
+				}
 			}
 
 			if (event.type == sf::Event::Closed)

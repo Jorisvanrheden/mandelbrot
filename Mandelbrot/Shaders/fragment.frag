@@ -30,8 +30,8 @@ int compute_iterations(int max, int i, int j)
 		float aa = a*a - b*b;
 		float bb = 2 * a*b;
 
-		a = aa + cx;
-		b = bb + cy;
+		a = aa + originalA;
+		b = bb + originalB;
 			
 		if (a + b > 16)
 		{
@@ -54,7 +54,9 @@ void main()
 
 	float color = map(n, 0, maxIterations, 1, 0);
 	float redshift = gl_FragCoord.x/screenSize.x;
+	
+	float value = n/maxIterations;
 
     // multiply it by the color
-    gl_FragColor = vec4(color,color,color,1);
+    gl_FragColor = vec4(value,value,value,1);
 }
