@@ -1,62 +1,30 @@
 #include <SFML/Graphics.hpp>
 
 #include <iostream>
+#include <stdio.h>
 
-double Map(double realValue, double realMin, double realMax, double mappedMin, double mappedMax)
+float map(float value, float realMin, float realMax, float mappedMin, float mappedMax)
 {
-	double realPercentage = (realValue - realMin) / (realMax - realMin);
+	float realPercentage = (value - realMin) / (realMax - realMin);
 
-	double additionToMapped = realPercentage * (mappedMax - mappedMin);
+	float additionToMapped = realPercentage * (mappedMax - mappedMin);
 	return mappedMin + additionToMapped;
-}
-
-sf::Image DrawImage(sf::Image image, int width, int height, double relMinX, double relMaxX, double relMinY, double relMaxY)
-{
-	for (int i = 0; i < width; i++)
-	{
-		for (int j = 0; j < height; j++)
-		{
-			const int maxIterations = 100;
-
-			//Map pixel to relative range
-			double a = Map(i, 0, width, relMinX, relMaxX);
-			double b = Map(j, 0, height, relMinY, relMaxY);
-
-			double originalA = a;
-			double originalB = b;
-
-			int n = 0;
-			while (n < maxIterations)
-			{
-				double aa = a*a - b*b;
-				double bb = 2 * a*b;
-
-				a = aa + originalA;
-				b = bb + originalB;
-
-				if (a + b>16)
-				{
-					break;
-				}
-
-				n++;
-			}
-
-			int bright = Map(n, 0, maxIterations, 255, 0);
-
-			sf::Color color = sf::Color(bright, bright, bright, 255);
-			image.setPixel(i, j, color);
-		}
-	}
-	return image;
 }
 
 int main()
 {
-	int screenWidth = 400;
-	int screenHeight = 400;
+	int screenWidth = 900;
+	int screenHeight = 900;
 
 	sf::RenderWindow window(sf::VideoMode(screenWidth, screenHeight), "Mandelbrot");
+
+	sf::Shader shader;
+
+	// Load the shader
+	if (!shader.loadFromFile("..\\Shaders\\fragment.frag", sf::Shader::Fragment))
+	{
+		std::cout << "NOT FOUND" << std::endl;
+	}
 
 	sf::Image image;
 	image.create(screenWidth, screenHeight);
@@ -68,10 +36,13 @@ int main()
 	sf::Sprite sprite = sf::Sprite(texture);
 	sprite.setPosition(0, 0);
 
-	double relativeMinX = -1;
-	double relativeMaxX = 1;
-	double relativeMinY = -1;
-	double relativeMaxY = 1;
+	double relativeMinX = -2;
+	double relativeMaxX = 2;
+	double relativeMinY = -2;
+	double relativeMaxY = 2;
+	sf::Vector2i mousePos(0, 0);
+
+	bool locked = false;
 	
 	texture.update(image);
 
@@ -105,8 +76,8 @@ int main()
 					double diff = relativeMaxY - relativeMinY;
 					double iter = diff*0.01f;
 
-					relativeMinY -= iter;
-					relativeMaxY -= iter;
+					relativeMinY += iter;
+					relativeMaxY += iter;
 				}
 
 				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down))
@@ -114,8 +85,8 @@ int main()
 					double diff = relativeMaxY - relativeMinY;
 					double iter = diff*0.01f;
 
-					relativeMinY += iter;
-					relativeMaxY += iter;
+					relativeMinY -= iter;
+					relativeMaxY -= iter;
 				}					
 			}
 
@@ -141,17 +112,39 @@ int main()
 				relativeMinY = middleY - diffY / 2;
 			}
 
+			if (event.type == sf::Event::MouseButtonPressed) 
+			{
+				locked = !locked;
+			}
+
+			if (event.type == sf::Event::MouseMoved) 
+			{
+				if (!locked)
+				{
+					mousePos = sf::Mouse::getPosition(window);
+				}				
+			}
+
 			if (event.type == sf::Event::Closed)
 				window.close();
 		}
 
 		window.clear();
 
-		image = DrawImage(image, screenWidth, screenHeight, relativeMinX, relativeMaxX, relativeMinY, relativeMaxY);
-		texture.update(image);
+		float cx = map(mousePos.x, 0, screenWidth, -1, 1);
+		float cy = map(mousePos.y, 0, screenHeight, -1, 1);
+
+		//Pass the updated texture to the shader
+		shader.setUniform("relativeX", sf::Glsl::Vec2(relativeMinX, relativeMaxX));
+		shader.setUniform("relativeY", sf::Glsl::Vec2(relativeMinY, relativeMaxY));
+		shader.setUniform("relativeC", sf::Glsl::Vec2(cx, cy));
+		shader.setUniform("screenSize", sf::Glsl::Vec2(screenWidth, screenHeight));
 
 
-		window.draw(sprite);
+		sf::RenderStates states;
+		states.shader = &shader;
+		
+		window.draw(sprite, states);
 
 		window.display();
 	}
