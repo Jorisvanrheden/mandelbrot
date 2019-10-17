@@ -4,6 +4,7 @@ uniform vec2 relativeX;
 uniform vec2 relativeY;
 uniform vec2 relativeC;
 uniform vec2 screenSize;
+uniform int maxIterations;
 
 float map(float value, float realMin, float realMax, float mappedMin, float mappedMax)
 {
@@ -25,18 +26,18 @@ int compute_iterations(int max, int i, int j)
 	float cy = relativeC.y;
 
 	int n = 0;
-	while (n < max)
+	while (a*a + b*b < 4 && n < max)
 	{
 		float aa = a*a - b*b;
 		float bb = 2 * a*b;
 
+		//Original
 		a = aa + originalA;
-		b = bb + originalB;
-			
-		if (a + b > 16)
-		{
-			break;
-		}
+		b = bb + originalB;		
+		
+		//Julia subset
+		//a = aa + cx;
+		//b = bb + cy;	
 
 		n++;
 	}
@@ -45,18 +46,27 @@ int compute_iterations(int max, int i, int j)
 }
 
 void main()
-{		
-	int maxIterations = 1000;
-	
+{			
 	int x = int(gl_FragCoord.x);
 	int y = int(gl_FragCoord.y);
 	int n = compute_iterations(maxIterations, x, y);
-
-	float color = map(n, 0, maxIterations, 1, 0);
-	float redshift = gl_FragCoord.x/screenSize.x;
 	
-	float value = n/maxIterations;
-
+	vec4 color = vec4(1,0,0,1);
+	if(n <= maxIterations)
+	{
+		float quotient = float(n)/float(maxIterations);
+		
+		if(quotient>0.5)
+		{
+			color = vec4(0, quotient, quotient,1);
+		}
+		else
+		{
+			color = vec4(0, quotient, 0, 1);
+		}
+		color = vec4(quotient,quotient,quotient, quotient);
+	}
+	
     // multiply it by the color
-    gl_FragColor = vec4(value,value,value,1);
+    gl_FragColor = color;
 }
