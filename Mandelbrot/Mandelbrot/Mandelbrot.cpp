@@ -57,11 +57,11 @@ int main()
 		{
 			if (event.type == sf::Event::KeyPressed)
 			{
-				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Add))
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Period))
 				{
 					maxIterations++;
 				}
-				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Subtract))
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Comma))
 				{
 					maxIterations--;
 
